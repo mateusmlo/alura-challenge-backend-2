@@ -1,8 +1,5 @@
 export const dbConfig = () => {
   return {
-    pgUser: process.env.POSTGRES_USER,
-    pgPassword: process.env.POSTGRES_PASSWORD,
-    db: process.env.POSTGRES_DB,
-    pgPort: process.env.POSTGRES_PORT,
+    uri: `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@finance-control.oooo8.mongodb.net/finance-control?retryWrites=true&w=majority`,
   };
 };
