@@ -32,7 +32,7 @@ export class ReceiptsController {
   }
 
   @Delete('/:id')
-  deleteReceipt(@Param('id') id: string): Promise<number> {
+  deleteReceipt(@Param('id') id: string): Promise<Receipt> {
     return this.receiptsService.deleteReceipt(id);
   }
 

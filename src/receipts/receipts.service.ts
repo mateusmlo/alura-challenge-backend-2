@@ -34,7 +34,7 @@ export class ReceiptsService {
     const isDescriptionDuped = await this.receiptModel
       .findOne({
         description: `${createReceiptDto.description}`,
-        data: {
+        date: {
           $gte: requestDateMonthStart,
           $lte: requestDateMonthEnd,
         },
@@ -71,7 +71,7 @@ export class ReceiptsService {
     return receipt;
   }
 
-  async deleteReceipt(id: string): Promise<number> {
+  async deleteReceipt(id: string): Promise<Receipt> {
     const receipt = await this.findReceiptByID(id);
 
     if (!receipt)
@@ -79,7 +79,7 @@ export class ReceiptsService {
         'Não foi encontrada uma receita com este ID.',
       );
 
-    return (await this.receiptModel.deleteOne()).deletedCount;
+    return await receipt.deleteOne({ returnOriginal: true });
   }
 
   async updateReceipt(
