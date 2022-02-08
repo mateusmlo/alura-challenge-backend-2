@@ -27,38 +27,32 @@ export class SummaryService {
       profit: 0,
       byCategory: {},
     };
-    const receipts = await this.receiptsService.findReceiptsByMonth(
+
+    const [totalReceipts] = await this.receiptsService.totalReceipts(
       year,
       month,
     );
+
+    const [totalExpenses] = await this.expensesService.totalExpenses(
+      year,
+      month,
+    );
+
     const expenses = await this.expensesService.findReceiptsByMonth(
       year,
       month,
     );
 
-    summary.totalReceipts = receipts.reduce(
-      (initialReceipt, currentReceipt) => {
-        return initialReceipt + currentReceipt.value;
-      },
-      summary.totalReceipts,
-    );
+    summary.totalExpenses = totalExpenses.total;
+    summary.totalReceipts = totalReceipts.total;
 
-    summary.totalExpenses = expenses.reduce(
-      (initialExpense, currentExpense) => {
-        return initialExpense + currentExpense.value;
-      },
-      summary.totalExpenses,
-    );
+    expenses.reduce((prev, exp) => {
+      const { category, value } = exp;
 
-    /*     //!BROKEN soma das despesas por categoria
-    expenses.map((expense) => {
-      expenses.reduce((a, b) => {
-        if (b.category === expense.category)
-          summary.byCategory[expense.category] = a + b.value;
+      prev[category] ? (prev[category] += value) : (prev[category] = value);
 
-        return (summary.byCategory[expense.category] = expense.value);
-      }, expense.value);
-    }); */
+      return (summary.byCategory = { ...prev });
+    }, {});
 
     summary.profit = parseFloat(
       (summary.totalReceipts - summary.totalExpenses).toFixed(2),

@@ -146,4 +146,25 @@ export class ExpensesService {
       this.logger.error(error);
     }
   }
+
+  async totalExpenses(year: number, month: number) {
+    return this.expenseModel.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: DateTime.fromObject({ year, month }),
+            $lte: DateTime.fromObject({ year, month }).endOf('month'),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: '$value',
+          },
+        },
+      },
+    ]);
+  }
 }
