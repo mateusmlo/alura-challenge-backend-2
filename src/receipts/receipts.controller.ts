@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CreateReceiptDTO } from './dto/create-receipt.dto';
 import { UpdateReceiptDTO } from './dto/update-receipt.dto';
@@ -22,13 +23,21 @@ export class ReceiptsController {
   }
 
   @Get()
-  findAllReceipts(): Promise<Receipt[]> {
-    return this.receiptsService.findAllReceipts();
+  findAllReceipts(@Query('descricao') search: string): Promise<Receipt[]> {
+    return this.receiptsService.findAllReceipts(search);
   }
 
   @Get('/:id')
   getReceiptByID(@Param('id') id: string): Promise<Receipt> {
     return this.receiptsService.findReceiptByID(id);
+  }
+
+  @Get('/:y/:m')
+  getReceiptsByMonth(
+    @Param('y') year: number,
+    @Param('m') month: number,
+  ): Promise<Receipt[]> {
+    return this.receiptsService.findReceiptsByMonth(year, month);
   }
 
   @Delete('/:id')

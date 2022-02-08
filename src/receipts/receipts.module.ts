@@ -10,5 +10,6 @@ import { ReceiptsService } from './receipts.service';
   ],
   controllers: [ReceiptsController],
   providers: [ReceiptsService],
+  exports: [ReceiptsService],
 })
 export class ReceiptsModule {}

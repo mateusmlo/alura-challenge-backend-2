@@ -56,7 +56,13 @@ export class ReceiptsService {
     }
   }
 
-  async findAllReceipts(): Promise<Receipt[]> {
+  async findAllReceipts(search: string): Promise<Receipt[]> {
+    if (search) {
+      return this.receiptModel.find({
+        description: { $regex: search, $options: 'i' },
+      });
+    }
+
     return this.receiptModel.find().exec();
   }
 
@@ -69,6 +75,15 @@ export class ReceiptsService {
       );
 
     return receipt;
+  }
+
+  async findReceiptsByMonth(year: number, month: number): Promise<Receipt[]> {
+    return this.receiptModel.find({
+      date: {
+        $gte: DateTime.fromObject({ year, month }),
+        $lte: DateTime.fromObject({ year, month }).endOf('month'),
+      },
+    });
   }
 
   async deleteReceipt(id: string): Promise<Receipt> {
@@ -114,8 +129,7 @@ export class ReceiptsService {
       receipt.date = updateReceiptDto.date;
     }
 
-    receipt.description = updateReceiptDto.description;
-    receipt.value = updateReceiptDto.value;
+    Object.assign(receipt, updateReceiptDto);
 
     try {
       return receipt.save();
