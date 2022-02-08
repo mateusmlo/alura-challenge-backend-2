@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import { Model } from 'mongoose';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { ExpenseCategory } from './schema/expense-category.enum';
 import { Expense } from './schema/expense.schema';
 
 @Injectable()
@@ -47,6 +48,10 @@ export class ExpensesService {
       );
     }
 
+    if (createExpenseDto.category) {
+      createExpenseDto.category = ExpenseCategory[createExpenseDto.category];
+    }
+
     const newExpense = new this.expenseModel(createExpenseDto);
 
     try {
@@ -56,7 +61,13 @@ export class ExpensesService {
     }
   }
 
-  async findAllExpenses(): Promise<Expense[]> {
+  async findAllExpenses(search: string): Promise<Expense[]> {
+    if (search) {
+      return this.expenseModel.find({
+        description: { $regex: search, $options: 'i' },
+      });
+    }
+
     return this.expenseModel.find().exec();
   }
 
@@ -69,6 +80,15 @@ export class ExpensesService {
       );
 
     return expense;
+  }
+
+  async findReceiptsByMonth(year: number, month: number): Promise<Expense[]> {
+    return this.expenseModel.find({
+      date: {
+        $gte: DateTime.fromObject({ year, month }),
+        $lte: DateTime.fromObject({ year, month }).endOf('month'),
+      },
+    });
   }
 
   async deleteExpense(id: string): Promise<Expense> {
@@ -114,8 +134,11 @@ export class ExpensesService {
       expense.date = updateExpenseDto.date;
     }
 
-    expense.description = updateExpenseDto.description;
-    expense.value = updateExpenseDto.value;
+    if (updateExpenseDto.category) {
+      updateExpenseDto.category = ExpenseCategory[updateExpenseDto.category];
+    }
+
+    Object.assign(expense, updateExpenseDto);
 
     try {
       return expense.save();

@@ -10,5 +10,6 @@ import { Expense, ExpenseSchema } from './schema/expense.schema';
   ],
   controllers: [ExpensesController],
   providers: [ExpensesService],
+  exports: [ExpensesService],
 })
 export class ExpensesModule {}

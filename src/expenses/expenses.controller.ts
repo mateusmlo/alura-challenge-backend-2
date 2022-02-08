@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
@@ -23,8 +24,8 @@ export class ExpensesController {
   }
 
   @Get()
-  findAll(): Promise<Expense[]> {
-    return this.expensesService.findAllExpenses();
+  findAll(@Query('descricao') search: string): Promise<Expense[]> {
+    return this.expensesService.findAllExpenses(search);
   }
 
   @Get(':id')
@@ -35,6 +36,14 @@ export class ExpensesController {
   @Put(':id')
   update(@Param('id') id: string, @Body() updateExpenseDto: UpdateExpenseDto) {
     return this.expensesService.updateExpense(id, updateExpenseDto);
+  }
+
+  @Get('/:y/:m')
+  getReceiptsByMonth(
+    @Param('y') year: number,
+    @Param('m') month: number,
+  ): Promise<Expense[]> {
+    return this.expensesService.findReceiptsByMonth(year, month);
   }
 
   @Delete(':id')
