@@ -50,6 +50,8 @@ export class ExpensesService {
 
     if (createExpenseDto.category) {
       createExpenseDto.category = ExpenseCategory[createExpenseDto.category];
+    } else {
+      createExpenseDto.category = ExpenseCategory.Others;
     }
 
     const newExpense = new this.expenseModel(createExpenseDto);

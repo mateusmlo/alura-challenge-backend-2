@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ExpensesService } from 'src/expenses/expenses.service';
 import { ExpenseCategory } from 'src/expenses/schema/expense-category.enum';
-import { Expense } from 'src/expenses/schema/expense.schema';
 import { ReceiptsService } from 'src/receipts/receipts.service';
 
 export type Summary = {
   totalReceipts: number;
   totalExpenses: number;
   profit: number;
-  byCategory: {
+  expensesByCategory: {
     [key in ExpenseCategory]?: number;
   };
 };
@@ -25,7 +24,7 @@ export class SummaryService {
       totalExpenses: 0,
       totalReceipts: 0,
       profit: 0,
-      byCategory: {},
+      expensesByCategory: {},
     };
 
     const [totalReceipts] = await this.receiptsService.totalReceipts(
@@ -51,9 +50,10 @@ export class SummaryService {
 
       prev[category] ? (prev[category] += value) : (prev[category] = value);
 
-      return (summary.byCategory = { ...prev });
-    }, {});
+      return (summary.expensesByCategory = { ...prev });
+    }, {} as { [key in ExpenseCategory]: number });
 
+    //essa subtração pode retornar casas decimais em excesso apesar de trabalharmos apenas com numeros x.xx devido a forma com que o JS trata floats, sendo necessário então passar um toFixed
     summary.profit = parseFloat(
       (summary.totalReceipts - summary.totalExpenses).toFixed(2),
     );
