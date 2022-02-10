@@ -63,7 +63,7 @@ export class ExpensesService {
     }
   }
 
-  async findAllExpenses(search: string): Promise<Expense[]> {
+  async findAllExpenses(search?: string): Promise<Expense[]> {
     if (search) {
       return this.expenseModel.find({
         description: { $regex: search, $options: 'i' },
