@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { dbConfig } from './config/db.config';
 import { ExpensesModule } from './expenses/expenses.module';
 import { SummaryModule } from './summary/summary.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SummaryModule } from './summary/summary.module';
       inject: [ConfigService],
     }),
     SummaryModule,
+    UserModule,
   ],
 })
 export class AppModule {}
