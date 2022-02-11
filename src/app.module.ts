@@ -7,6 +7,9 @@ import { dbConfig } from './config/db.config';
 import { ExpensesModule } from './expenses/expenses.module';
 import { SummaryModule } from './summary/summary.module';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { jwtConstants } from './config/jwt.config';
+import { authConfig } from './config/auth.config';
 
 @Module({
   imports: [
@@ -14,7 +17,7 @@ import { UserModule } from './user/user.module';
     ExpensesModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [dbConfig],
+      load: [dbConfig, jwtConstants, authConfig],
     }),
     MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
@@ -27,6 +30,7 @@ import { UserModule } from './user/user.module';
     }),
     SummaryModule,
     UserModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
