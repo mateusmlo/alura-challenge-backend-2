@@ -1,66 +1,71 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExpensesService } from './expenses.service';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model, Query } from 'mongoose';
-import { ExpenseDoc, expensesArray, mockExpense } from './test.setup';
-import { createMock } from '@golevelup/ts-jest';
+import {
+  ExpenseDoc,
+  expensesArray,
+  mockExpense,
+  mockExpenseDoc,
+  mockExpenseRepository,
+} from './test.setup';
 import { ExpenseCategory } from './schema/expense-category.enum';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { DateTime } from 'luxon';
+import { ExpenseRepository } from './expenses.repository';
+import { CreateExpenseDto } from './dto/create-expense.dto';
 
 describe('ExpensesService', () => {
   let service: ExpensesService;
-  let expenseModel: Model<ExpenseDoc>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExpensesService,
         {
-          provide: getModelToken('Expense'),
-          useValue: {},
+          provide: ExpenseRepository,
+          useValue: mockExpenseRepository,
         },
       ],
     }).compile();
 
-    expenseModel = module.get<Model<ExpenseDoc>>(getModelToken('Expense'));
     service = module.get<ExpensesService>(ExpensesService);
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should create a new expense', async () => {
-    const expense = mockExpense();
-    jest.spyOn(service, 'createExpense').mockResolvedValue(expense);
-
-    const newExpense = await service.createExpense({
-      description: expense.description,
-      value: expense.value,
-      date: expense.date,
+    const mock = mockExpense('carro quebrou', 'umdoistres', 99.99);
+    mockExpenseRepository.findOneBy.mockImplementationOnce(() => {
+      Promise.resolve({
+        _id: 'etc',
+        description: 'a',
+        value: 1,
+        date: Date.now(),
+      });
     });
 
-    expect(newExpense).toEqual(expense);
-    expect(service.createExpense).toHaveBeenCalled();
+    mockExpenseRepository.save.mockResolvedValueOnce(mock);
+
+    const createExpenseDto: CreateExpenseDto = {
+      description: 'carro quebrou',
+      value: 99.99,
+      date: mock.date,
+    };
+
+    const newExpense = await service.createExpense(createExpenseDto);
+
     expect(service.createExpense).not.toThrow();
-    //default category if not provided
+    expect(mockExpenseRepository.findOneBy).toHaveBeenCalled();
     expect(newExpense.category).toEqual(ExpenseCategory.Others);
   });
 
   it('should fail to create expense if it has same description on same month', async () => {
     const expense = mockExpense();
-
-    jest
-      .spyOn(service, 'createExpense')
-      .mockRejectedValue(
-        new ConflictException(
-          'Já existe uma receita com esta descrição cadastrada no mês vigente.',
-        ),
-      );
 
     const failedExpense = service.createExpense({
       description: expense.description,
