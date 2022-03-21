@@ -18,7 +18,6 @@ import { JWTPayload } from './types/jwt-payload';
 export class AuthService {
   private refreshJwtSignOptions: JwtSignOptions;
 
-  //TODO configurar variaveis de ambiente do jwt refresh
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
@@ -26,7 +25,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {
     this.refreshJwtSignOptions = {
-      ...configService.get('refresh'),
+      ...configService.get<JwtSignOptions>('refresh'),
     };
   }
 
