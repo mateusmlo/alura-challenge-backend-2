@@ -1,41 +1,93 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
-import { randomUUID } from 'crypto';
-import { User } from 'src/user/schema/user.schema';
-import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { User } from 'src/users/schema/user.schema';
+import { UserService } from 'src/users/user.service';
+import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { RefreshTokenService } from './refresh-token.service';
+import { AuthPayload } from './types/auth-payload';
+import { JWTPayload } from './types/jwt-payload';
 
 @Injectable()
 export class AuthService {
-  private accessJwtSignOptions: JwtSignOptions;
+  private refreshJwtSignOptions: JwtSignOptions;
 
+  //TODO configurar variaveis de ambiente do jwt refresh
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private refreshTokenService: RefreshTokenService,
     private configService: ConfigService,
   ) {
-    this.accessJwtSignOptions = {
-      ...this.configService.get('jwtConstants.accessTokenConstants'),
+    this.refreshJwtSignOptions = {
+      ...configService.get('refresh'),
     };
   }
 
   async validateUser(username: string, password: string): Promise<User> {
-    const user = await this.userService.validateLogin(username, password);
+    const user = await this.userService.findOne(username);
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid)
+      throw new UnauthorizedException(`Invalid credentials`);
 
     return user;
   }
 
-  async login(user: User) {
-    const payload = { id: user.id, username: user.username };
-
-    return {
-      accessToken: this.signToken(payload),
-      sessionId: randomUUID(),
-      userId: user.id,
-    };
+  async ping() {
+    return this.refreshTokenService.ping();
   }
 
-  private signToken(payload: { id: number; username: string }): string {
-    return this.jwtService.sign(payload, this.accessJwtSignOptions);
+  async signUp(createUserDto: CreateUserDto): Promise<User> {
+    const { username, password } = createUserDto;
+
+    const user = await this.userService.createUser({
+      username,
+      password,
+    });
+
+    return user;
+  }
+
+  async signIn(authCredentialsDto: AuthCredentialsDto): Promise<AuthPayload> {
+    const { username, password } = authCredentialsDto;
+
+    const user = await this.userService.findOne(username);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!user && !isPasswordValid) throw new UnauthorizedException();
+
+    const payload = { username, sub: user.id };
+    const accessToken = await this.jwtService.signAsync(payload);
+    const refreshToken = await this.generateRefreshToken(payload);
+
+    return { accessToken, refreshToken };
+  }
+
+  async generateRefreshToken(payload: JWTPayload) {
+    const refreshToken = await this.jwtService.signAsync(
+      payload,
+      this.refreshJwtSignOptions,
+    );
+
+    try {
+      await this.refreshTokenService.saveRefreshToken(
+        this.refreshJwtSignOptions.expiresIn,
+        payload.sub,
+        refreshToken,
+      );
+
+      return refreshToken;
+    } catch (err) {
+      console.log(err);
+      throw new InternalServerErrorException();
+    }
   }
 }

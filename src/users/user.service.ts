@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -27,14 +27,7 @@ export class UserService {
     }
   }
 
-  async validateLogin(username: string, password: string): Promise<User> {
-    const user = await this.userModel.findOne({ username });
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid)
-      throw new UnauthorizedException(`Invalid credentials`);
-
-    return user;
+  async findOne(username: string): Promise<User> {
+    return await this.userModel.findOne({ username });
   }
 }

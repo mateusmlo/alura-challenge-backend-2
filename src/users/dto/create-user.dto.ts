@@ -7,7 +7,7 @@ export class CreateUserDto {
   username: string;
 
   @IsString()
-  @MinLength(8)
+  @MinLength(5)
   @MaxLength(32)
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
     message:
