@@ -8,6 +8,7 @@ import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Redis } from 'ioredis';
 import * as bcrypt from 'bcrypt';
 
+
 @Injectable()
 export class RefreshTokenService {
   public logger = new Logger();
@@ -18,7 +19,7 @@ export class RefreshTokenService {
     return await this.redis.ping('BORA');
   }
 
-  async validateRefreshToken(token: string, sub: number) {
+  async validateRefreshToken(token: string, sub: any) {
     const secureTkn = await this.getToken(sub);
 
     await this.compareTokens(token, secureTkn);
@@ -35,7 +36,7 @@ export class RefreshTokenService {
     return tkn;
   }
 
-  async saveRefreshToken(expiresIn: number | string, sub: number, tkn: string) {
+  async saveRefreshToken(expiresIn: number | string, sub: any, tkn: string) {
     const refreshTkn = await bcrypt.hash(tkn, 12);
 
     return await this.redis.set(sub.toString(), refreshTkn, 'ex', expiresIn);

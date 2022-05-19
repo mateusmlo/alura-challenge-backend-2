@@ -1,4 +1,6 @@
+import { Types } from 'mongoose';
+
 export type JWTPayload = {
-  sub: number;
+  sub: Types.ObjectId;
   username: string;
 };

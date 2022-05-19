@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './schema/user.schema';
 import * as bcrypt from 'bcrypt';
+import { Expense } from 'src/expenses/schema/expense.schema';
 
 @Injectable()
 export class UserService {
@@ -15,16 +16,12 @@ export class UserService {
 
     const hashPassword = await bcrypt.hash(password, 10);
 
-    const user = new this.userModel({
+    const user = await this.userModel.create({
       username,
       password: hashPassword,
     });
 
-    try {
-      return user.save();
-    } catch (err) {
-      this.logger.error(err);
-    }
+    return user;
   }
 
   async findOne(username: string): Promise<User> {

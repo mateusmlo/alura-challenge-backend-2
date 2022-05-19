@@ -24,15 +24,13 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
   }
 
   async validate(req: Request, payload: JWTPayload): Promise<UserDto> {
-    console.log(req.headers, payload);
-
     const token = req.headers.authorization;
 
     await this.refreshTokenService.validateRefreshToken(token, payload.sub);
 
     const user = await this.userService.findOne(payload.username);
     return {
-      user_id: user.id,
+      user_id: user._id,
       username: user.username,
     };
   }
