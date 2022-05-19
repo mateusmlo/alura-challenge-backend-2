@@ -37,7 +37,7 @@ export class SummaryService {
       month,
     );
 
-    const expenses = await this.expensesService.findReceiptsByMonth(
+    const expenses = await this.expensesService.findExpensesByMonth(
       year,
       month,
     );

@@ -43,7 +43,7 @@ export class ExpensesController {
     @Param('y') year: number,
     @Param('m') month: number,
   ): Promise<Expense[]> {
-    return this.expensesService.findReceiptsByMonth(year, month);
+    return this.expensesService.findExpensesByMonth(year, month);
   }
 
   @Delete(':id')
