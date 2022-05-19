@@ -1,7 +1,6 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MockType } from '../common/mocks/mock.type';
-import { User } from '../users/schema/user.schema';
 import { ExpensesService } from './expenses.service';
 import { Expense } from './schema/expense.schema';
 import { expenseStub } from './stubs/expense.stub';
@@ -33,10 +32,6 @@ describe('ExpensesService', () => {
     model = module.get(getModelToken(Expense.name));
   });
 
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   it('should be defined', () => {
     expect(service).toBeDefined();
     expect(model).toBeDefined();
@@ -50,7 +45,6 @@ describe('ExpensesService', () => {
         description: testExpense.description,
         value: testExpense.value,
         date: testExpense.date,
-        user: {} as User,
         category: testExpense.category,
       };
     });
