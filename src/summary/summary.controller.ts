@@ -10,6 +10,7 @@ export class SummaryController {
     @Param('y') year: number,
     @Param('m') month: number,
   ): Promise<Summary> {
+
     return this.summaryService.getMonthSummary(year, month);
   }
 }

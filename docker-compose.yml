@@ -15,10 +15,21 @@ services:
     volumes:
       - .:/opt/finance-control
       - /opt/finance-control/node_modules
-  #redis:
-  # container_name: aluraflix-redis
-  #image: redis:alpine
-  #command: --bind 0.0.0.0
-  #ports:
-  # - '6379:6379'
-  #restart: always
+    links:
+      - redis
+    networks:
+      - fnc
+  redis:
+    container_name: fnc-redis
+    image: bitnami/redis:latest
+    ports:
+      - '6379:6379'
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - fnc
+    volumes:
+      - .:/opt/finance-control/redis/data
+networks:
+  fnc:

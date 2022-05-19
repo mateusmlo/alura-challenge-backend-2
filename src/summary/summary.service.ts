@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ExpensesService } from 'src/expenses/expenses.service';
-import { ExpenseCategory } from 'src/expenses/schema/expense-category.enum';
-import { ReceiptsService } from 'src/receipts/receipts.service';
+import { ExpensesService } from '../expenses/expenses.service';
+import { ExpenseCategory } from '../expenses/schema/expense-category.enum';
+import { ReceiptsService } from '../receipts/receipts.service';
 
 export type Summary = {
   totalReceipts: number;
@@ -37,7 +37,7 @@ export class SummaryService {
       month,
     );
 
-    const expenses = await this.expensesService.findReceiptsByMonth(
+    const expenses = await this.expensesService.findExpensesByMonth(
       year,
       month,
     );
