@@ -1,33 +1,36 @@
+import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MockType } from '../common/mocks/mock.type';
+import { User } from '../users/schema/user.schema';
 import { ExpensesService } from './expenses.service';
-import {
-  ExpenseDoc,
-  expensesArray,
-  mockExpense,
-  mockExpenseDoc,
-  mockExpenseRepository,
-} from './test.setup';
-import { ExpenseCategory } from './schema/expense-category.enum';
+import { Expense } from './schema/expense.schema';
+import { expenseStub } from './stubs/expense.stub';
+import { Model } from 'mongoose';
+import { modelMock } from '../common/mocks/model.mock';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { DateTime } from 'luxon';
-import { ExpenseRepository } from './expenses.repository';
 import { CreateExpenseDto } from './dto/create-expense.dto';
+import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { ExpenseCategory } from './schema/expense-category.enum';
 
 describe('ExpensesService', () => {
+  let testExpense: Expense;
   let service: ExpensesService;
+  let model: MockType<Model<Expense>>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExpensesService,
         {
-          provide: ExpenseRepository,
-          useValue: mockExpenseRepository,
+          provide: getModelToken(Expense.name),
+          useFactory: modelMock,
         },
       ],
     }).compile();
 
+    testExpense = expenseStub();
     service = module.get<ExpensesService>(ExpensesService);
+    model = module.get(getModelToken(Expense.name));
   });
 
   afterEach(() => {
@@ -36,96 +39,124 @@ describe('ExpensesService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+    expect(model).toBeDefined();
   });
 
-  it('should create a new expense', async () => {
-    const mock = mockExpense('carro quebrou', 'umdoistres', 99.99);
-    mockExpenseRepository.findOneBy.mockImplementationOnce(() => {
-      Promise.resolve({
-        _id: 'etc',
-        description: 'a',
-        value: 1,
-        date: Date.now(),
-      });
+  describe('createExpense', () => {
+    let createExpenseDto: CreateExpenseDto;
+
+    beforeEach(() => {
+      createExpenseDto = {
+        description: testExpense.description,
+        value: testExpense.value,
+        date: testExpense.date,
+        user: {} as User,
+        category: testExpense.category,
+      };
     });
 
-    mockExpenseRepository.save.mockResolvedValueOnce(mock);
+    it('should call expenseModel and return new expense if no dupes found', async () => {
+      model.findOne.mockReturnValue(null);
+      model.create.mockReturnValue(testExpense);
 
-    const createExpenseDto: CreateExpenseDto = {
-      description: 'carro quebrou',
-      value: 99.99,
-      date: mock.date,
-    };
+      const newExpense = await service.createExpense(createExpenseDto);
 
-    const newExpense = await service.createExpense(createExpenseDto);
-
-    expect(service.createExpense).not.toThrow();
-    expect(mockExpenseRepository.findOneBy).toHaveBeenCalled();
-    expect(newExpense.category).toEqual(ExpenseCategory.Others);
-  });
-
-  it('should fail to create expense if it has same description on same month', async () => {
-    const expense = mockExpense();
-
-    const failedExpense = service.createExpense({
-      description: expense.description,
-      value: expense.value,
-      date: expense.date,
+      expect(newExpense).toEqual(testExpense);
     });
 
-    expect(service.createExpense).toHaveBeenCalled();
-    await expect(failedExpense).rejects.toThrow(
-      new ConflictException(
-        'Já existe uma receita com esta descrição cadastrada no mês vigente.',
-      ),
-    );
-  });
+    it('should throw if duped expense', async () => {
+      model.findOne.mockReturnValue(testExpense);
 
-  it('should find all expenses', async () => {
-    jest.spyOn(service, 'findAllExpenses').mockResolvedValue(expensesArray);
-
-    const allExpenses = await service.findAllExpenses();
-
-    expect(allExpenses).toEqual(expensesArray);
-  });
-
-  it('should find all expenses that match searched description', async () => {
-    jest
-      .spyOn(service, 'findAllExpenses')
-      .mockResolvedValue(
-        expensesArray.filter(
-          (ex) => ex.description === 'parangaricotirimirruaro',
+      await expect(
+        service.createExpense(createExpenseDto),
+      ).rejects.toThrowError(
+        new ConflictException(
+          'Já existe uma receita com esta descrição cadastrada no mês vigente.',
         ),
       );
-
-    const expensesFiltered = await service.findAllExpenses(
-      'parangaricotirimirruaro',
-    );
-
-    expect(expensesFiltered).toEqual([expensesArray[1]]);
+    });
   });
 
-  it('should find expense by ID', async () => {
-    const mockExp = mockExpense();
-    jest.spyOn(service, 'findExpenseByID').mockResolvedValue(mockExp);
+  describe('findAllExpenses', () => {
+    it('should return all expenses', async () => {
+      const allExpenses = [testExpense];
+      model.find.mockReturnValue(allExpenses);
 
-    const expense = await service.findExpenseByID('umdoistres');
-
-    expect(expense).toBeDefined();
-    expect(service.findExpenseByID).toHaveBeenCalled();
-    expect(expense.id).toEqual(mockExp.id);
+      await expect(service.findAllExpenses('test')).resolves.toEqual(
+        allExpenses,
+      );
+    });
   });
 
-  it('should throw if expense not found', async () => {
-    jest
-      .spyOn(service, 'findExpenseByID')
-      .mockRejectedValue(
+  describe('findExpenseByID', () => {
+    it('should find and return an expense by ID', async () => {
+      model.findById.mockReturnValue(testExpense);
+
+      await expect(service.findExpenseByID('1')).resolves.toEqual(testExpense);
+    });
+
+    it('should throw if expense not found', async () => {
+      model.findById.mockReturnValue(null);
+
+      await expect(service.findExpenseByID('999')).rejects.toThrowError(
         new NotFoundException('Não foi encontrada uma despesa com este ID.'),
       );
+    });
+  });
 
-    await expect(service.findExpenseByID('999')).rejects.toThrow(
-      new NotFoundException('Não foi encontrada uma despesa com este ID.'),
-    );
-    expect(service.findExpenseByID).toHaveBeenCalled();
+  describe('findRecepitsByMonth', () => {
+    it('should return receipts created in provided period', async () => {
+      model.find.mockReturnValue([testExpense]);
+
+      await expect(service.findExpensesByMonth(2000, 1)).resolves.toEqual([
+        testExpense,
+      ]);
+    });
+  });
+
+  describe('deleteExpense', () => {
+    it('should return a count of deleted expenses if succesful', async () => {
+      model.findById.mockReturnValue(testExpense);
+      model.deleteOne.mockReturnValue({ deletedCount: 1 });
+
+      await expect(service.deleteExpense('1')).resolves.toEqual(1);
+    });
+
+    it('should throw if expense to delete not found', async () => {
+      model.findById.mockReturnValue(null);
+      model.deleteOne.mockReturnValue({ deleteCount: 0 });
+
+      await expect(service.deleteExpense('1')).rejects.toThrowError(
+        new NotFoundException('Não foi encontrada uma despesa com este ID.'),
+      );
+    });
+  });
+
+  describe('updateExpense', () => {
+    let updateExpenseDto: UpdateExpenseDto;
+
+    beforeEach(() => {
+      updateExpenseDto = {
+        date: new Date(2001),
+        category: ExpenseCategory.Food,
+        description: 'update test',
+      };
+    });
+
+    it('should update expense and be different from original', async () => {
+      const expenseBeforeUpdate: Expense = { ...testExpense };
+      model.findById.mockReturnValue(testExpense);
+      model.updateOne.mockReturnValue(
+        Object.assign(testExpense, updateExpenseDto),
+      );
+
+      await expect(
+        service.updateExpense('1', updateExpenseDto),
+      ).resolves.not.toEqual(expenseBeforeUpdate);
+    });
+  });
+
+  describe('totalExpenses', () => {
+    it('should return the sum of all expenses for a given month', async () => {});
   });
 });
