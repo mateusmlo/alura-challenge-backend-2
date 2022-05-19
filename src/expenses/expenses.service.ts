@@ -144,7 +144,7 @@ export class ExpensesService {
     }
   }
 
-  async totalExpenses(year: number, month: number) {
+  async totalExpenses(year: number, month: number): Promise<any[]> {
     return this.expenseModel.aggregate([
       {
         $match: {

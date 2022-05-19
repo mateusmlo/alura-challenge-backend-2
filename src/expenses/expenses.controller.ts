@@ -39,7 +39,7 @@ export class ExpensesController {
   }
 
   @Get('/:y/:m')
-  getReceiptsByMonth(
+  getExpensesByMonth(
     @Param('y') year: number,
     @Param('m') month: number,
   ): Promise<Expense[]> {

@@ -10,5 +10,6 @@ export const modelMock: () => MockType<Model<any>> = jest.fn(
       findById: jest.fn(),
       deleteOne: jest.fn(),
       updateOne: jest.fn(),
+      aggregate: jest.fn(),
     } as any),
 );

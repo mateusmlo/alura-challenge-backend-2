@@ -151,6 +151,12 @@ describe('ExpensesService', () => {
   });
 
   describe('totalExpenses', () => {
-    it('should return the sum of all expenses for a given month', async () => {});
+    it('should return the sum of all expenses for a given month', async () => {
+      model.aggregate.mockReturnValue({ total: 100 });
+
+      await expect(service.totalExpenses(2000, 1)).resolves.toEqual({
+        total: 100,
+      });
+    });
   });
 });

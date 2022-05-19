@@ -15,15 +15,6 @@ services:
     volumes:
       - .:/opt/finance-control
       - /opt/finance-control/node_modules
-<<<<<<< Updated upstream
-  #redis:
-  # container_name: aluraflix-redis
-  #image: redis:alpine
-  #command: --bind 0.0.0.0
-  #ports:
-  # - '6379:6379'
-  #restart: always
-=======
     links:
       - redis
     networks:
@@ -42,4 +33,3 @@ services:
       - .:/opt/finance-control/redis/data
 networks:
   fnc:
->>>>>>> Stashed changes
