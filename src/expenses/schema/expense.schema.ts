@@ -1,15 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { DateTime } from 'luxon';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 import { ExpenseCategory } from './expense-category.enum';
 
-export type ExpenseDocument = Expense & Document;
-
-@Schema({ _id: false })
-export class Expense {
-  @Prop({ type: Types.ObjectId })
-  _id: Types.ObjectId;
-
+@Schema()
+export class Expense extends Document {
   @Prop({ required: true })
   description: string;
 

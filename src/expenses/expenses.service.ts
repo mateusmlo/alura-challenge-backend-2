@@ -11,14 +11,12 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { ExpenseRepository } from './expenses.repository';
 import { ExpenseCategory } from './schema/expense-category.enum';
-import { Expense, ExpenseDocument } from './schema/expense.schema';
+import { Expense } from './schema/expense.schema';
 
 @Injectable()
 export class ExpensesService {
   private logger = new Logger('Expenses Service');
-  constructor(
-    @InjectModel(Expense.name) private expenseModel: Model<ExpenseDocument>,
-  ) {}
+  constructor(private expenseRepository: ExpenseRepository) {}
 
   async createExpense(createExpenseDto: CreateExpenseDto) {
     createExpenseDto.date = DateTime.fromFormat(
@@ -33,7 +31,7 @@ export class ExpensesService {
       createExpenseDto.date,
     ).endOf('month');
 
-    const isDescriptionDuped = await this.expenseModel.findOne({
+    const isDescriptionDuped = await this.expenseRepository.findOneBy({
       description: `${createExpenseDto.description}`,
       date: {
         $gte: requestDateMonthStart,
@@ -53,9 +51,15 @@ export class ExpensesService {
       createExpenseDto.category = ExpenseCategory.Others;
     }
 
-    const newExpense = await this.expenseModel.create(createExpenseDto);
+    const newExpense = await this.expenseRepository.createExpense(
+      createExpenseDto,
+    );
 
-    return newExpense;
+    try {
+      return this.expenseRepository.save(newExpense);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   async findAllExpenses(search?: string): Promise<Expense[]> {
@@ -65,11 +69,11 @@ export class ExpensesService {
       });
     }
 
-    return this.expenseModel.find();
+    return this.expenseRepository.findManyBy();
   }
 
   async findExpenseByID(id: string): Promise<Expense> {
-    const expense = await this.expenseModel.findById(id);
+    const expense = await this.expenseRepository.findByID(id);
 
     if (!expense)
       throw new NotFoundException(
@@ -79,8 +83,8 @@ export class ExpensesService {
     return expense;
   }
 
-  async findExpensesByMonth(year: number, month: number): Promise<Expense[]> {
-    return this.expenseModel.find({
+  async findReceiptsByMonth(year: number, month: number): Promise<Expense[]> {
+    return this.expenseRepository.findManyBy({
       date: {
         $gte: DateTime.fromObject({ year, month }),
         $lte: DateTime.fromObject({ year, month }).endOf('month'),
@@ -96,7 +100,7 @@ export class ExpensesService {
         'Não foi encontrada uma despesa com este ID.',
       );
 
-    return (await this.expenseModel.deleteOne(expense)).deletedCount;
+    return await this.expenseRepository.deleteExpense(id);
   }
 
   async updateExpense(
@@ -138,8 +142,7 @@ export class ExpensesService {
     Object.assign(expense, updateExpenseDto);
 
     try {
-      await this.expenseModel.updateOne(expense);
-      return expense;
+      return expense.save();
     } catch (error) {
       this.logger.error(error);
     }
