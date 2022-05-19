@@ -4,8 +4,10 @@ services:
   dev:
     container_name: finance-control_dev
     image: docker.io/library/finance-control:development
+    build:
+      context: .
+      target: development
     depends_on:
-      - db
       - redis
     ports:
       - 3000:3000
@@ -15,10 +17,31 @@ services:
     volumes:
       - .:/opt/finance-control
       - /opt/finance-control/node_modules
-  #redis:
-  # container_name: aluraflix-redis
-  #image: redis:alpine
-  #command: --bind 0.0.0.0
-  #ports:
-  # - '6379:6379'
-  #restart: always
+    links:
+      - redis
+    networks:
+      - fnc
+  redis:
+    container_name: fnc-redis
+    image: bitnami/redis:latest
+    ports:
+      - '6379:6379'
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - fnc
+    volumes:
+      - .:/opt/finance-control/redis/data
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - '8081:8081'
+    depends_on:
+      - redis
+    networks:
+      - fnc
+networks:
+  fnc:
