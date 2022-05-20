@@ -4,10 +4,8 @@ services:
   dev:
     container_name: finance-control_dev
     image: docker.io/library/finance-control:development
-    build:
-      context: .
-      target: development
     depends_on:
+      - db
       - redis
     ports:
       - 3000:3000
@@ -33,15 +31,5 @@ services:
       - fnc
     volumes:
       - .:/opt/finance-control/redis/data
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-    ports:
-      - '8081:8081'
-    depends_on:
-      - redis
-    networks:
-      - fnc
 networks:
   fnc:

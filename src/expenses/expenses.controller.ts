@@ -3,21 +3,17 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Put,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { Expense } from './schema/expense.schema';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('expenses')
-@UseGuards(JwtAuthGuard)
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
@@ -31,29 +27,26 @@ export class ExpensesController {
     return this.expensesService.findAllExpenses(search);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string): Promise<Expense> {
+  @Get('/:id')
+  findOne(@Param('id') id: string) {
     return this.expensesService.findExpenseByID(id);
   }
 
-  @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateExpenseDto: UpdateExpenseDto,
-  ): Promise<Expense> {
+  @Put('/:id')
+  update(@Param('id') id: string, @Body() updateExpenseDto: UpdateExpenseDto) {
     return this.expensesService.updateExpense(id, updateExpenseDto);
   }
 
   @Get('/:y/:m')
-  getReceiptsByMonth(
+  getExpensesByMonth(
     @Param('y') year: number,
     @Param('m') month: number,
   ): Promise<Expense[]> {
     return this.expensesService.findExpensesByMonth(year, month);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string): Promise<number> {
+  @Delete('/:id')
+  remove(@Param('id') id: string) {
     return this.expensesService.deleteExpense(id);
   }
 }
