@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { DateTime } from 'luxon';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { ExpenseCategory } from './expense-category.enum';
 
 export type ExpenseDocument = Expense & Document;

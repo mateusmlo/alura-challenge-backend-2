@@ -138,8 +138,7 @@ export class ExpensesService {
     Object.assign(expense, updateExpenseDto);
 
     try {
-      await this.expenseModel.updateOne({ _id: id }, expense);
-
+      await this.expenseModel.updateOne(expense);
       return expense;
     } catch (error) {
       this.logger.error(error);
