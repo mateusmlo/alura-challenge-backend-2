@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Put,
@@ -28,12 +27,12 @@ export class ExpensesController {
     return this.expensesService.findAllExpenses(search);
   }
 
-  @Get(':id')
+  @Get('/:id')
   findOne(@Param('id') id: string) {
     return this.expensesService.findExpenseByID(id);
   }
 
-  @Put(':id')
+  @Put('/:id')
   update(@Param('id') id: string, @Body() updateExpenseDto: UpdateExpenseDto) {
     return this.expensesService.updateExpense(id, updateExpenseDto);
   }
@@ -46,7 +45,7 @@ export class ExpensesController {
     return this.expensesService.findExpensesByMonth(year, month);
   }
 
-  @Delete(':id')
+  @Delete('/:id')
   remove(@Param('id') id: string) {
     return this.expensesService.deleteExpense(id);
   }

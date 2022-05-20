@@ -13,7 +13,7 @@ describe('SummaryService', () => {
     totalReceipts: 100,
     profit: 0,
     expensesByCategory: {
-      unplanned: 123,
+      Unplanned: 123,
     },
   };
 

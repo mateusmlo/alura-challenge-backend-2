@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -104,6 +105,10 @@ export class ExpensesService {
   ): Promise<Expense> {
     const expense = await this.findExpenseByID(id);
 
+    if (ExpenseCategory[updateExpenseDto.category] === undefined) {
+      throw new BadRequestException('Categoria inválida.');
+    }
+
     //* caso uma data seja passada para atualizar, não pode ser de uma já existente no mês
     if (updateExpenseDto.date) {
       updateExpenseDto.date = DateTime.fromFormat(
@@ -130,14 +135,11 @@ export class ExpensesService {
       expense.date = updateExpenseDto.date;
     }
 
-    if (updateExpenseDto.category) {
-      updateExpenseDto.category = ExpenseCategory[updateExpenseDto.category];
-    }
-
     Object.assign(expense, updateExpenseDto);
 
     try {
-      await this.expenseModel.updateOne(expense);
+      await this.expenseModel.updateOne({ _id: id }, expense);
+
       return expense;
     } catch (error) {
       this.logger.error(error);
