@@ -28,10 +28,11 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
 
     await this.refreshTokenService.validateRefreshToken(token, payload.sub);
 
-    const user = await this.userService.findOne(payload.username);
+    const user = await this.userService.findOne(payload.email);
+
     return {
-      user_id: user._id,
-      username: user.username,
+      user_id: payload.sub,
+      email: user.email,
     };
   }
 }

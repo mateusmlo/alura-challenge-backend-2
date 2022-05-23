@@ -8,7 +8,6 @@ import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Redis } from 'ioredis';
 import * as bcrypt from 'bcrypt';
 
-
 @Injectable()
 export class RefreshTokenService {
   public logger = new Logger();
@@ -19,38 +18,41 @@ export class RefreshTokenService {
     return await this.redis.ping('BORA');
   }
 
-  async validateRefreshToken(token: string, sub: any) {
-    const secureTkn = await this.getToken(sub);
+  async validateRefreshToken(token: string, sub: string) {
+    const secureTkn = await this.getTokenHash(sub);
 
     await this.compareTokens(token, secureTkn);
-    await this.deleteKey(sub);
 
     return true;
   }
 
-  async getToken(sub: number) {
-    const tkn = await this.redis.get(sub.toString());
+  async getTokenHash(sub: string) {
+    const tkn = await this.redis.get(sub);
 
-    if (tkn === null) throw new UnauthorizedException();
+    if (tkn === null) throw new UnauthorizedException('Invalid token');
 
     return tkn;
   }
 
-  async saveRefreshToken(expiresIn: number | string, sub: any, tkn: string) {
+  async saveRefreshToken(
+    expiresIn: number | string,
+    sub: any,
+    tkn: string,
+  ): Promise<'OK' | null> {
     const refreshTkn = await bcrypt.hash(tkn, 12);
 
-    return await this.redis.set(sub.toString(), refreshTkn, 'ex', expiresIn);
+    return await this.redis.set(sub, refreshTkn, 'ex', expiresIn);
   }
 
-  async deleteKey(sub: number) {
-    const isRevoked = await this.redis.del(sub.toString());
+  async deleteKey(sub: any): Promise<boolean> {
+    const res = await this.redis.del(sub);
 
-    if (isRevoked !== 1) throw new InternalServerErrorException();
+    if (res !== 1) throw new InternalServerErrorException();
 
     return true;
   }
 
-  async compareTokens(tkn: string, secureTkn: string) {
+  async compareTokens(tkn: string, secureTkn: string): Promise<boolean> {
     //splits 'Bearer ' portion then extracts the token
     const payload = tkn.split(' ');
 

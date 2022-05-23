@@ -4,7 +4,10 @@ export class CreateUserDto {
   @IsString()
   @MinLength(4)
   @MaxLength(20)
-  username: string;
+  @Matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g, {
+    message: 'Invalid e-mail format',
+  })
+  email: string;
 
   @IsString()
   @MinLength(5)

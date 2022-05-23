@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UserDto } from 'src/users/dto/user.dto';
 import { UserService } from 'src/users/user.service';
 import { JWTPayload } from '../types/jwt-payload';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -19,15 +20,17 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JWTPayload): Promise<UserDto> {
-    const { username, sub } = payload;
-    const user = await this.userService.findOne(username);
+  async validate(req: Request, payload: JWTPayload): Promise<UserDto> {
+    const token = req.headers.authorization;
+    const { email, sub } = payload;
+    const user = await this.userService.findOne(email);
 
     if (!user) throw new UnauthorizedException('Invalid token.');
 
     return {
       user_id: sub,
-      username: user.username,
+      email: user.email,
+      token: token,
     };
   }
 }

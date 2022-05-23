@@ -1,27 +1,39 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { CurrentUser } from 'src/users/decorators/get-user.decorator';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UserDto } from 'src/users/dto/user.dto';
+import { User } from 'src/users/schema/user.schema';
 import { AuthService } from './auth.service';
-import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { AuthPayload } from './types/auth-payload';
+import { RefreshGuard } from './guards/refresh-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('/signup')
+  @Post('signup')
   signUp(@Body() createUserDto: CreateUserDto) {
     return this.authService.signUp(createUserDto);
   }
 
   @UseGuards(LocalAuthGuard)
   @Post('signin')
-  signIn(@Body() authCredentialsDto: AuthCredentialsDto): Promise<AuthPayload> {
-    return this.authService.signIn(authCredentialsDto);
+  signIn(@CurrentUser() user: UserDto) {
+    return this.authService.signIn(user);
   }
 
-  @Get('/ping')
-  ping() {
+  @UseGuards(RefreshGuard)
+  @Post('refresh')
+  issueRefreshToken(@CurrentUser() user: UserDto) {
+    return this.authService.refreshAccessToken(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('ping')
+  ping(@CurrentUser() user: User) {
+    //console.log(user);
+
     return this.authService.ping();
   }
 }

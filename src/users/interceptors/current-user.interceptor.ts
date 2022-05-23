@@ -12,10 +12,10 @@ export class CurrentUserInterceptor implements NestInterceptor {
 
   async intercept(ctx: ExecutionContext, handler: CallHandler) {
     const req = ctx.switchToHttp().getRequest();
-    const { user_id } = req || {};
+    const { email } = req || {};
 
-    if (user_id) {
-      const user = await this.userService.findOne(user_id);
+    if (email) {
+      const user = await this.userService.findOne(email);
 
       req.user = user;
     }

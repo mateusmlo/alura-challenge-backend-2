@@ -28,6 +28,8 @@ import { MongoConfig } from './config/mongo.config';
       useClass: RedisConfig,
     }),
     SummaryModule,
+    AuthModule,
+    UserModule,
   ],
 })
 export class AppModule {}

@@ -1,12 +1,14 @@
 import {
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UserDto } from 'src/users/dto/user.dto';
 import { User } from 'src/users/schema/user.schema';
 import { UserService } from 'src/users/user.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
@@ -18,7 +20,6 @@ import { JWTPayload } from './types/jwt-payload';
 export class AuthService {
   private refreshJwtSignOptions: JwtSignOptions;
 
-  //TODO configurar variaveis de ambiente do jwt refresh
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
@@ -30,8 +31,8 @@ export class AuthService {
     };
   }
 
-  async validateUser(username: string, password: string): Promise<User> {
-    const user = await this.userService.findOne(username);
+  async validateUser(email: string, password: string): Promise<User> {
+    const user = await this.userService.findOne(email);
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -46,29 +47,26 @@ export class AuthService {
   }
 
   async signUp(createUserDto: CreateUserDto): Promise<User> {
-    const { username, password } = createUserDto;
+    const { email, password } = createUserDto;
 
     const user = await this.userService.createUser({
-      username,
+      email,
       password,
     });
 
     return user;
   }
 
-  async signIn(authCredentialsDto: AuthCredentialsDto): Promise<AuthPayload> {
-    const { username, password } = authCredentialsDto;
+  async signIn(payload: UserDto): Promise<AuthPayload> {
+    const jwtPayload: JWTPayload = {
+      email: payload.email,
+      sub: payload.user_id,
+    };
 
-    const user = await this.userService.findOne(username);
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const accessToken = await this.jwtService.signAsync(jwtPayload);
+    await this.generateRefreshToken(jwtPayload);
 
-    if (!user && !isPasswordValid) throw new UnauthorizedException();
-
-    const payload = { username, sub: user._id };
-    const accessToken = await this.jwtService.signAsync(payload);
-    const refreshToken = await this.generateRefreshToken(payload);
-
-    return { accessToken, refreshToken };
+    return { accessToken };
   }
 
   async generateRefreshToken(payload: JWTPayload) {
@@ -89,5 +87,22 @@ export class AuthService {
       console.log(err);
       throw new InternalServerErrorException();
     }
+  }
+
+  async refreshAccessToken(payload: UserDto) {
+    try {
+      const tkn = await this.refreshTokenService.getTokenHash(payload.user_id);
+
+      await this.refreshTokenService.validateRefreshToken(tkn, payload.user_id);
+
+      return this.signIn(payload);
+    } catch (err) {
+      console.error(err);
+      throw new UnauthorizedException(err.message);
+    }
+  }
+
+  async logout(user: JWTPayload) {
+    return this.refreshTokenService.deleteKey(user.sub);
   }
 }
