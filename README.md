@@ -26,8 +26,6 @@
 Só atualizo esse projeto quando estou com tempo livre no meu trabalho!
 
 ## TODO:
-- [ ] Implementar testes unitários
-- [ ] Tasks da semana 3
 - [ ] Deixar esse README decente (como rodar o projeto, desafios, o que aprendi)
 
 ## Description
