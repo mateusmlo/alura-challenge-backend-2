@@ -14,22 +14,23 @@ export class RefreshTokenService {
 
   constructor(@InjectRedis('jwt') private readonly redis: Redis) {}
 
-  async ping() {
+  async ping(): Promise<string> {
     return await this.redis.ping('BORA');
   }
 
-  async validateRefreshToken(token: string, sub: string) {
+  async validateRefreshToken(token: string, sub: string): Promise<boolean> {
     const secureTkn = await this.getTokenHash(sub);
 
     await this.compareTokens(token, secureTkn);
+    await this.deleteKey(sub);
 
     return true;
   }
 
-  async getTokenHash(sub: string) {
+  async getTokenHash(sub: string): Promise<string> {
     const tkn = await this.redis.get(sub);
 
-    if (tkn === null) throw new UnauthorizedException('Invalid token');
+    if (tkn === null) throw new UnauthorizedException('token expired');
 
     return tkn;
   }
@@ -47,7 +48,7 @@ export class RefreshTokenService {
   async deleteKey(sub: any): Promise<boolean> {
     const res = await this.redis.del(sub);
 
-    if (res !== 1) throw new InternalServerErrorException();
+    if (res !== 1) return false;
 
     return true;
   }
@@ -58,7 +59,7 @@ export class RefreshTokenService {
 
     const isMatch = await bcrypt.compare(payload[1], secureTkn);
 
-    if (!isMatch) throw new UnauthorizedException();
+    if (!isMatch) throw new UnauthorizedException('invalid token');
 
     return true;
   }

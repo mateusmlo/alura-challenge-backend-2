@@ -20,8 +20,6 @@ export class UserService {
       password: hashPassword,
     });
 
-    console.log(user, createUserDto);
-
     return user;
   }
 

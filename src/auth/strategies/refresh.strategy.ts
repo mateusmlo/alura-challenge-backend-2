@@ -30,7 +30,7 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
 
     const user = await this.userService.findOne(payload.email);
 
-    return {
+    return <UserDto>{
       user_id: payload.sub,
       email: user.email,
     };

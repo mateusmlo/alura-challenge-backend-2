@@ -17,7 +17,7 @@ interface ClassConstructor {
  * e.g by using a UserDto we can expose certain properties that are ok to be
  * inside the response, like the user's email or name. Any extraneous, irrelevant props, are going to be excluded.
  *
- * @param DTO Class
+ * @param dto Class
  */
 export const Serialize = (dto: ClassConstructor) => {
   return UseInterceptors(new SerializeInterceptor(dto));

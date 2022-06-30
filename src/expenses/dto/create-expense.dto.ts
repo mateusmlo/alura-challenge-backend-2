@@ -25,5 +25,5 @@ export class CreateExpenseDto {
 
   @IsOptional()
   @IsEnum(ExpenseCategory, { message: 'Categoria inválida.' })
-  category?: ExpenseCategory = ExpenseCategory.Others;
+  category: ExpenseCategory = ExpenseCategory.Others;
 }

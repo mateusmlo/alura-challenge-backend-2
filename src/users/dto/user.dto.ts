@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import { Types } from 'mongoose';
 
 export class UserDto {
   @Expose()
@@ -7,7 +6,4 @@ export class UserDto {
 
   @Expose()
   email: string;
-
-  @Expose()
-  token?: string;
 }

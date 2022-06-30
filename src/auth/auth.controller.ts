@@ -2,7 +2,6 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/users/decorators/get-user.decorator';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UserDto } from 'src/users/dto/user.dto';
-import { User } from 'src/users/schema/user.schema';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -18,22 +17,25 @@ export class AuthController {
   }
 
   @UseGuards(LocalAuthGuard)
-  @Post('signin')
+  @Post('login')
   signIn(@CurrentUser() user: UserDto) {
-    return this.authService.signIn(user);
+    return this.authService.login(user);
+  }
+
+  @Post('logout')
+  logout(@Body('userId') userId: string) {
+    return this.authService.logout(userId);
   }
 
   @UseGuards(RefreshGuard)
   @Post('refresh')
   issueRefreshToken(@CurrentUser() user: UserDto) {
-    return this.authService.refreshAccessToken(user);
+    return this.authService.login(user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('ping')
-  ping(@CurrentUser() user: User) {
-    //console.log(user);
-
+  ping() {
     return this.authService.ping();
   }
 }

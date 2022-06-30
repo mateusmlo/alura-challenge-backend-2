@@ -3,7 +3,6 @@ version: '3.8'
 services:
   dev:
     container_name: finance-control_dev
-    image: docker.io/library/finance-control:development
     build:
       context: .
       target: development

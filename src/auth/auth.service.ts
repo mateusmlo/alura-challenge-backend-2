@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -57,25 +58,30 @@ export class AuthService {
     return user;
   }
 
-  async signIn(payload: UserDto): Promise<AuthPayload> {
+  async login(payload: UserDto): Promise<AuthPayload> {
     const jwtPayload: JWTPayload = {
       email: payload.email,
       sub: payload.user_id,
     };
 
     const accessToken = await this.jwtService.signAsync(jwtPayload);
-    await this.generateRefreshToken(jwtPayload);
+    const refreshToken = await this.generateRefreshToken(jwtPayload);
 
-    return { accessToken };
+    return {
+      accessToken,
+      refreshToken,
+      userId: payload.user_id,
+      email: payload.email,
+    };
   }
 
   async generateRefreshToken(payload: JWTPayload) {
-    const refreshToken = await this.jwtService.signAsync(
-      payload,
-      this.refreshJwtSignOptions,
-    );
-
     try {
+      const refreshToken = await this.jwtService.signAsync(
+        payload,
+        this.refreshJwtSignOptions,
+      );
+
       await this.refreshTokenService.saveRefreshToken(
         this.refreshJwtSignOptions.expiresIn,
         payload.sub,
@@ -89,20 +95,9 @@ export class AuthService {
     }
   }
 
-  async refreshAccessToken(payload: UserDto) {
-    try {
-      const tkn = await this.refreshTokenService.getTokenHash(payload.user_id);
+  async logout(userId: string) {
+    if (!userId) throw new BadRequestException('no user to logout');
 
-      await this.refreshTokenService.validateRefreshToken(tkn, payload.user_id);
-
-      return this.signIn(payload);
-    } catch (err) {
-      console.error(err);
-      throw new UnauthorizedException(err.message);
-    }
-  }
-
-  async logout(user: JWTPayload) {
-    return this.refreshTokenService.deleteKey(user.sub);
+    return this.refreshTokenService.deleteKey(userId);
   }
 }
