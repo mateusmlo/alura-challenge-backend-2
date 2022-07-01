@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UserDto } from 'src/users/dto/user.dto';
 import { ExpensesService } from '../expenses/expenses.service';
 import { ExpenseCategory } from '../expenses/schema/expense-category.enum';
 import { ReceiptsService } from '../receipts/receipts.service';
@@ -19,7 +20,11 @@ export class SummaryService {
     private expensesService: ExpensesService,
   ) {}
 
-  async getMonthSummary(year: number, month: number): Promise<Summary> {
+  async getMonthSummary(
+    year: number,
+    month: number,
+    user: UserDto,
+  ): Promise<Summary> {
     const summary: Summary = {
       totalExpenses: 0,
       totalReceipts: 0,
@@ -30,16 +35,19 @@ export class SummaryService {
     const [totalReceipts] = await this.receiptsService.totalReceipts(
       year,
       month,
+      user,
     );
 
     const [totalExpenses] = await this.expensesService.totalExpenses(
       year,
       month,
+      user,
     );
 
     const expenses = await this.expensesService.findExpensesByMonth(
       year,
       month,
+      user,
     );
 
     summary.totalExpenses = totalExpenses.total;

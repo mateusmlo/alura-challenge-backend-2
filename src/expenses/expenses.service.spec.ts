@@ -3,18 +3,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MockType } from '../common/mocks/mock.type';
 import { ExpensesService } from './expenses.service';
 import { Expense } from './schema/expense.schema';
-import { expenseStub } from './stubs/expense.stub';
+import { expenseStub, vUserDto } from './stubs/expense.stub';
 import { Model } from 'mongoose';
 import { modelMock } from '../common/mocks/model.mock';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { ExpenseCategory } from './schema/expense-category.enum';
+import { UserDto } from '../users/dto/user.dto';
 
 describe('ExpensesService', () => {
   let testExpense: Expense;
   let service: ExpensesService;
   let model: MockType<Model<Expense>>;
+  let userDto: UserDto;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,6 +29,7 @@ describe('ExpensesService', () => {
       ],
     }).compile();
 
+    userDto = vUserDto();
     testExpense = expenseStub();
     service = module.get<ExpensesService>(ExpensesService);
     model = module.get(getModelToken(Expense.name));
@@ -44,7 +47,7 @@ describe('ExpensesService', () => {
       createExpenseDto = {
         description: testExpense.description,
         value: testExpense.value,
-        date: testExpense.date,
+        date: testExpense.date.toString(),
         category: testExpense.category,
       };
     });
@@ -53,7 +56,7 @@ describe('ExpensesService', () => {
       model.findOne.mockReturnValue(null);
       model.create.mockReturnValue(testExpense);
 
-      const newExpense = await service.createExpense(createExpenseDto);
+      const newExpense = await service.createExpense(createExpenseDto, userDto);
 
       expect(newExpense).toEqual(testExpense);
     });
@@ -62,7 +65,7 @@ describe('ExpensesService', () => {
       model.findOne.mockReturnValue(testExpense);
 
       await expect(
-        service.createExpense(createExpenseDto),
+        service.createExpense(createExpenseDto, userDto),
       ).rejects.toThrowError(
         new ConflictException(
           'Já existe uma receita com esta descrição cadastrada no mês vigente.',
@@ -72,11 +75,11 @@ describe('ExpensesService', () => {
   });
 
   describe('findAllExpenses', () => {
-    it('should return all expenses', async () => {
+    it('should return all expenses owned by a user', async () => {
       const allExpenses = [testExpense];
       model.find.mockReturnValue(allExpenses);
 
-      await expect(service.findAllExpenses('test')).resolves.toEqual(
+      await expect(service.findAllExpenses(userDto, 'test')).resolves.toEqual(
         allExpenses,
       );
     });
@@ -102,9 +105,9 @@ describe('ExpensesService', () => {
     it('should return receipts created in provided period', async () => {
       model.find.mockReturnValue([testExpense]);
 
-      await expect(service.findExpensesByMonth(2000, 1)).resolves.toEqual([
-        testExpense,
-      ]);
+      await expect(
+        service.findExpensesByMonth(2000, 1, userDto),
+      ).resolves.toEqual([testExpense]);
     });
   });
 
@@ -154,7 +157,7 @@ describe('ExpensesService', () => {
     it('should return the sum of all expenses for a given month', async () => {
       model.aggregate.mockReturnValue({ total: 100 });
 
-      await expect(service.totalExpenses(2000, 1)).resolves.toEqual({
+      await expect(service.totalExpenses(2000, 1, userDto)).resolves.toEqual({
         total: 100,
       });
     });

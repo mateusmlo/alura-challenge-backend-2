@@ -15,7 +15,7 @@ interface ClassConstructor {
 /**
  * A decorator to serialize and sanitize any object through the use of a DTO
  * e.g by using a UserDto we can expose certain properties that are ok to be
- * inside the response, like the user's email or name. Any extraneous, irrelevant props, are going to be excluded.
+ * inside the response, like the user's email or name. Any other props are going to be excluded.
  *
  * @param dto Class
  */

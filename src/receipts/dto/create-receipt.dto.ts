@@ -1,4 +1,4 @@
-import { IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateReceiptDTO {
   @IsNotEmpty({ message: 'A descrição não pode estar em branco.' })
@@ -9,6 +9,6 @@ export class CreateReceiptDTO {
   @IsNumber()
   value: number;
 
-  @IsDate({ message: 'Formato de data inválido' })
-  date: Date;
+  @IsString()
+  date: string;
 }

@@ -8,6 +8,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { DateTime } from 'luxon';
 import { Model } from 'mongoose';
+import { UserDto } from 'src/users/dto/user.dto';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { ExpenseCategory } from './schema/expense-category.enum';
@@ -20,25 +21,22 @@ export class ExpensesService {
     @InjectModel(Expense.name) private expenseModel: Model<ExpenseDocument>,
   ) {}
 
-  async createExpense(createExpenseDto: CreateExpenseDto) {
-    createExpenseDto.date = DateTime.fromFormat(
-      createExpenseDto.date.toString(),
-      'dd-L-yyyy',
-    ).toJSDate();
+  async createExpense(createExpenseDto: CreateExpenseDto, user: UserDto) {
+    const dateTime = DateTime.fromFormat(createExpenseDto.date, 'dd-L-yyyy');
 
-    const requestDateMonthStart = DateTime.fromJSDate(
-      createExpenseDto.date,
-    ).startOf('month');
-    const requestDateMonthEnd = DateTime.fromJSDate(
-      createExpenseDto.date,
-    ).endOf('month');
+    createExpenseDto.date = dateTime.toString();
+
+    const requestDateMonthStart = dateTime.startOf('month');
+
+    const requestDateMonthEnd = dateTime.endOf('month');
 
     const isDescriptionDuped = await this.expenseModel.findOne({
-      description: `${createExpenseDto.description}`,
+      description: createExpenseDto.description,
       date: {
         $gte: requestDateMonthStart,
         $lte: requestDateMonthEnd,
       },
+      user: user.user_id,
     });
 
     if (isDescriptionDuped) {
@@ -53,19 +51,23 @@ export class ExpensesService {
       createExpenseDto.category = ExpenseCategory.Others;
     }
 
-    const newExpense = await this.expenseModel.create(createExpenseDto);
+    const newExpense = await this.expenseModel.create({
+      ...createExpenseDto,
+      user: user.user_id,
+    });
 
     return newExpense;
   }
 
-  async findAllExpenses(search?: string): Promise<Expense[]> {
+  async findAllExpenses(user: UserDto, search?: string): Promise<Expense[]> {
     if (search) {
       return this.expenseModel.find({
         description: { $regex: search, $options: 'i' },
+        user: user.user_id,
       });
     }
 
-    return this.expenseModel.find();
+    return this.expenseModel.find({ user: user.user_id });
   }
 
   async findExpenseByID(id: string): Promise<Expense> {
@@ -79,12 +81,17 @@ export class ExpensesService {
     return expense;
   }
 
-  async findExpensesByMonth(year: number, month: number): Promise<Expense[]> {
+  async findExpensesByMonth(
+    year: number,
+    month: number,
+    user: UserDto,
+  ): Promise<Expense[]> {
     return this.expenseModel.find({
       date: {
         $gte: DateTime.fromObject({ year, month }),
         $lte: DateTime.fromObject({ year, month }).endOf('month'),
       },
+      user: user.user_id,
     });
   }
 
@@ -145,7 +152,11 @@ export class ExpensesService {
     }
   }
 
-  async totalExpenses(year: number, month: number): Promise<any[]> {
+  async totalExpenses(
+    year: number,
+    month: number,
+    user: UserDto,
+  ): Promise<any[]> {
     return this.expenseModel.aggregate([
       {
         $match: {
@@ -153,6 +164,7 @@ export class ExpensesService {
             $gte: DateTime.fromObject({ year, month }),
             $lte: DateTime.fromObject({ year, month }).endOf('month'),
           },
+          user: user.user_id,
         },
       },
       {
