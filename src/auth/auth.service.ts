@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,7 +11,6 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UserDto } from 'src/users/dto/user.dto';
 import { User } from 'src/users/schema/user.schema';
 import { UserService } from 'src/users/user.service';
-import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { RefreshTokenService } from './refresh-token.service';
 import { AuthPayload } from './types/auth-payload';
 import { JWTPayload } from './types/jwt-payload';
@@ -34,6 +32,8 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<User> {
     const user = await this.userService.findOne(email);
+
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -75,7 +75,7 @@ export class AuthService {
     };
   }
 
-  async generateRefreshToken(payload: JWTPayload) {
+  async generateRefreshToken(payload: JWTPayload): Promise<string> {
     try {
       const refreshToken = await this.jwtService.signAsync(
         payload,
@@ -95,7 +95,7 @@ export class AuthService {
     }
   }
 
-  async logout(userId: string) {
+  async logout(userId: string): Promise<boolean> {
     if (!userId) throw new BadRequestException('no user to logout');
 
     return this.refreshTokenService.deleteKey(userId);

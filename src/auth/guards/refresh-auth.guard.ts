@@ -12,7 +12,7 @@ export class RefreshGuard extends AuthGuard('refresh') {
     status?: any,
   ): TUser {
     if (info instanceof JsonWebTokenError || info instanceof TokenExpiredError)
-      console.log(info.message);
+      console.warn(info.message);
 
     return user;
   }
