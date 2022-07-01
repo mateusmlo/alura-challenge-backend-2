@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { User } from 'src/users/schema/user.schema';
 import { ExpenseCategory } from '../schema/expense-category.enum';
 
 export class CreateExpenseDto {
@@ -20,7 +21,9 @@ export class CreateExpenseDto {
   @IsDate({ message: 'Formato de data inválido' })
   date: Date;
 
+  user: User;
+
   @IsOptional()
   @IsEnum(ExpenseCategory, { message: 'Categoria inválida.' })
-  category?: ExpenseCategory = ExpenseCategory.Others;
+  category: ExpenseCategory = ExpenseCategory.Others;
 }
