@@ -7,39 +7,38 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateReceiptDTO } from './dto/create-receipt.dto';
-import { Receipt } from './schema/receipt.schema';
+import { Receipt, ReceiptDocument } from './schema/receipt.schema';
 import { DateTime } from 'luxon';
 import { UpdateReceiptDTO } from './dto/update-receipt.dto';
+import { UserDto } from 'src/users/dto/user.dto';
 
 @Injectable()
 export class ReceiptsService {
   private logger = new Logger('Receipts Service');
   constructor(
-    @InjectModel(Receipt.name) private receiptModel: Model<Receipt>,
+    @InjectModel(Receipt.name) private receiptModel: Model<ReceiptDocument>,
   ) {}
 
-  async createReceipt(createReceiptDto: CreateReceiptDTO): Promise<Receipt> {
-    createReceiptDto.date = DateTime.fromFormat(
-      createReceiptDto.date.toString(),
-      'dd-L-yyyy',
-    ).toJSDate();
+  async createReceipt(
+    createReceiptDto: CreateReceiptDTO,
+    user: UserDto,
+  ): Promise<Receipt> {
+    const dateTime = DateTime.fromFormat(createReceiptDto.date, 'dd-L-yyyy');
 
-    const requestDateMonthStart = DateTime.fromJSDate(
-      createReceiptDto.date,
-    ).startOf('month');
-    const requestDateMonthEnd = DateTime.fromJSDate(
-      createReceiptDto.date,
-    ).endOf('month');
+    createReceiptDto.date = dateTime.toString();
 
-    const isDescriptionDuped = await this.receiptModel
-      .findOne({
-        description: `${createReceiptDto.description}`,
-        date: {
-          $gte: requestDateMonthStart,
-          $lte: requestDateMonthEnd,
-        },
-      })
-      .exec();
+    const requestDateMonthStart = dateTime.startOf('month');
+
+    const requestDateMonthEnd = dateTime.endOf('month');
+
+    const isDescriptionDuped = await this.receiptModel.findOne({
+      description: createReceiptDto.description,
+      date: {
+        $gte: requestDateMonthStart,
+        $lte: requestDateMonthEnd,
+      },
+      user: user.user_id,
+    });
 
     if (isDescriptionDuped) {
       throw new ConflictException(
@@ -56,14 +55,15 @@ export class ReceiptsService {
     }
   }
 
-  async findAllReceipts(search: string): Promise<Receipt[]> {
+  async findAllReceipts(user: UserDto, search?: string): Promise<Receipt[]> {
     if (search) {
       return this.receiptModel.find({
         description: { $regex: search, $options: 'i' },
+        user: user.user_id,
       });
     }
 
-    return this.receiptModel.find().exec();
+    return this.receiptModel.find({ user: user.user_id });
   }
 
   async findReceiptByID(id: string): Promise<Receipt> {
@@ -77,16 +77,21 @@ export class ReceiptsService {
     return receipt;
   }
 
-  async findReceiptsByMonth(year: number, month: number): Promise<Receipt[]> {
+  async findReceiptsByMonth(
+    year: number,
+    month: number,
+    user: UserDto,
+  ): Promise<Receipt[]> {
     return this.receiptModel.find({
       date: {
         $gte: DateTime.fromObject({ year, month }),
         $lte: DateTime.fromObject({ year, month }).endOf('month'),
       },
+      user: user.user_id,
     });
   }
 
-  async deleteReceipt(id: string): Promise<Receipt> {
+  async deleteReceipt(id: string): Promise<number> {
     const receipt = await this.findReceiptByID(id);
 
     if (!receipt)
@@ -94,7 +99,7 @@ export class ReceiptsService {
         'Não foi encontrada uma receita com este ID.',
       );
 
-    return await receipt.deleteOne({ returnOriginal: true });
+    return (await this.receiptModel.deleteOne(receipt)).deletedCount;
   }
 
   async updateReceipt(
@@ -132,13 +137,14 @@ export class ReceiptsService {
     Object.assign(receipt, updateReceiptDto);
 
     try {
-      return receipt.save();
+      await this.receiptModel.updateOne(receipt);
+      return receipt;
     } catch (error) {
       this.logger.error(error);
     }
   }
 
-  async totalReceipts(year: number, month: number) {
+  async totalReceipts(year: number, month: number, user: UserDto) {
     return this.receiptModel.aggregate([
       {
         $match: {
@@ -146,6 +152,7 @@ export class ReceiptsService {
             $gte: DateTime.fromObject({ year, month }),
             $lte: DateTime.fromObject({ year, month }).endOf('month'),
           },
+          user: user.user_id,
         },
       },
       {
