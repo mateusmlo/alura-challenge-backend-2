@@ -1,25 +1,25 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { DateTime } from 'luxon';
-import { Document, Types } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+import { User } from '../../users/schema/user.schema';
 import { ExpenseCategory } from './expense-category.enum';
 
 export type ExpenseDocument = Expense & Document;
 
-@Schema({ _id: false })
+@Schema({ versionKey: false })
 export class Expense {
-  @Prop({ type: Types.ObjectId })
-  _id: Types.ObjectId;
-
   @Prop({ required: true })
   description: string;
 
   @Prop({ required: true })
   value: number;
 
-  @Prop({ required: true, default: DateTime.now().toJSDate() })
+  @Prop({ required: true })
   date: Date;
 
-  @Prop()
+  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'user' })
+  user: User;
+
+  @Prop({ default: ExpenseCategory.Others })
   category: ExpenseCategory;
 }
 

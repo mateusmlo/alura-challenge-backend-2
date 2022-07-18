@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExpensesService } from '../expenses/expenses.service';
-import { expenseStub } from '../expenses/stubs/expense.stub';
+import { expenseStub, vUserDto } from '../expenses/stubs/expense.stub';
 import { ReceiptsService } from '../receipts/receipts.service';
 import { Summary, SummaryService } from './summary.service';
 
@@ -13,7 +13,7 @@ describe('SummaryService', () => {
     totalReceipts: 100,
     profit: 0,
     expensesByCategory: {
-      unplanned: 123,
+      Unplanned: 123,
     },
   };
 
@@ -50,9 +50,9 @@ describe('SummaryService', () => {
 
   describe('getMonthSummary', () => {
     it('should return an obj w/ the sum of all expenses, receipts, and expenses total by category', async () => {
-      await expect(summaryService.getMonthSummary(2000, 1)).resolves.toEqual(
-        summary,
-      );
+      await expect(
+        summaryService.getMonthSummary(2000, 1, vUserDto()),
+      ).resolves.toEqual(summary);
     });
   });
 });

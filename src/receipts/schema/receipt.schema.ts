@@ -1,9 +1,12 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { DateTime } from 'luxon';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+import { User } from '../../users/schema/user.schema';
 
-@Schema()
-export class Receipt extends Document {
+export type ReceiptDocument = Receipt & Document;
+
+@Schema({ versionKey: false })
+export class Receipt {
   @Prop({ required: true })
   description: string;
 
@@ -12,6 +15,9 @@ export class Receipt extends Document {
 
   @Prop({ required: true, default: DateTime.now().toJSDate() })
   date: Date;
+
+  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'user' })
+  user: User;
 }
 
 export const ReceiptSchema = SchemaFactory.createForClass(Receipt);
