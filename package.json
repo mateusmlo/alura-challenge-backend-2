@@ -19,7 +19,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "repl": "yarn start --entryFile repl"
+    "repl": "yarn start --entryFile repl",
+    "postinstall": "npm run prestart:prod",
+    "prestart:prod": "rimraf dist && npm run build"
   },
   "dependencies": {
     "@golevelup/ts-jest": "^0.3.2",
