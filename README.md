@@ -21,7 +21,7 @@ This project was made as an entry to a back-end challenge from [Alura](https://w
 - Same as above for receipts but categories are not available.
 - Generate a monthly summary listing the total receipts, expenses, profit, and expenses categorized.
 - Routes protected by JWTs, and thanks to the @CurrentUser() interceptor, the current logged-in user is automatically retrieved on each request.
-- Refresh tokens for durable sessions and Redis validation for that sexy speed. I didn't think response caching was necessary.
+- Refresh tokens for durable sessions and Redis validation for that sexy speed. I don't think response caching is necessary.
 
 ## REPL (New🌟):
 On your terminal, run `yarn repl` and the application will start in REPL mode, allowing you to test the methods directly (no need to open Postman or Insomnia for simple routes!). Usage of this neat feature can be found in the [Official docs](https://docs.nestjs.com/recipes/repl).
