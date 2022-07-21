@@ -14,7 +14,7 @@
 
 ## Description
 
-This project was made as an entry to a back-end challenge from [Alura](https://www.alura.com.br/). It consists of an API where users can sign-up, sign-in, then have access to a few routes with which they can register monthly expenses, receipts, do CRUD ops and generate summaries based on data from both features. This project is pretty much finished, I know some things could've been better and e2e tests are still missing but I've spent enough time working on this one, so I plan to improve things and take a step farther on my next one.
+This project was made as an entry to a back-end challenge from [Alura](https://www.alura.com.br/). It consists of an API where users can sign-up, sign-in, then have access to a few routes with which they can register monthly expenses, receipts, do CRUD ops and generate summaries based on data from both features. This project is pretty much finished, I know some things could've been better and e2e tests are still missing but I've spent enough time working on this, so I plan to improve things and take a step farther on my next one.
 
 ### Key Features:
 - Create, update, get and delete expenses, which may be categorized. Duplicate expenses are not allowed on the same month.
