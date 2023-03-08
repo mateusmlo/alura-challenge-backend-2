@@ -26,7 +26,7 @@
     "@liaoliaots/nestjs-redis": "^9.0.0",
     "@nestjs/common": "^9.0.4",
     "@nestjs/config": "^2.2.0",
-    "@nestjs/core": "^9.0.4",
+    "@nestjs/core": "^9.0.5",
     "@nestjs/jwt": "^9.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/mongoose": "^9.0.2",
